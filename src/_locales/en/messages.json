@@ -1,0 +1,14 @@
+{
+  "appName": {
+    "message": "Web Annotation",
+    "description": "The name of the extension."
+  },
+  "appDescription": {
+    "message": "Annotate the web please",
+    "description": "The description of the extension."
+  },
+  "btnTooltip": {
+    "message": "Annotate",
+    "description": "Tooltip for the button."
+  }
+}

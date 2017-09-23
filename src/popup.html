@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link href="styles/popup.css" rel="stylesheet">
+    <style>
+    #annotation-popup {
+      width: 40em;
+    }
+    .annotation-body {
+      width: 100%;
+    }
+    </style>
+  </head>
+  <body>
+    <div id="annotation-popup">
+      <h1>Annotate</h1>
+      <label>Selection:</label>
+      <div class="annotation-target">
+        <p>You have not selected any text to annotate...</p>
+      </div>
+      <label>Annotation:</label>
+      <form class="annotation-form">
+        <textarea class="annotation-body"></textarea>
+        <input type="submit" value="Save"></input>
+      </form>
+      <div class="annotation-preview"></div>
+    </div>
+
+    <script src="scripts/popup.js"></script>
+  </body>
+</html>
