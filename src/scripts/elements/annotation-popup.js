@@ -44,6 +44,8 @@ import ext from '../utils/ext'
         const rangeDocumentFragmentSelector = selector && selector.find(s => s.type === 'https://bengo.is/ns/annotations/RangeDocumentFragmentSelector')
         const selectionHtml = rangeDocumentFragmentSelector && rangeDocumentFragmentSelector.contents
         console.log('rangeDocumentFragmentSelector', rangeDocumentFragmentSelector)
+        const webAnnotation = this._createWebAnnotation(this.state)
+        // @TODO (bengo) DEFINITELY need to sanitize this before any real users use it
         const annoTargetHtml = selectionHtml
           ? `<blockquote>${selectionHtml}</blockquote>`
           : (selection && selection.text)
@@ -58,7 +60,12 @@ import ext from '../utils/ext'
             <textarea class="annotation-body"></textarea>
             <input type="submit" value="Save"></input>
           </form>
-          <div class="annotation-preview"></div>
+          <div class="annotation-preview">
+            <details>
+              <summary>JSON</summary>
+              <pre>${encodeHtmlEntities(JSON.stringify(webAnnotation, null, 2))}</pre>
+            </details>
+          </div>
         `
         return html
       }
@@ -85,6 +92,11 @@ import ext from '../utils/ext'
           relayoutHack.call(this)
         }
       }
+      _createWebAnnotation (state) {
+        console.debug('_createWebAnnotation', state)
+        const target = state.selection && state.selection.target
+        return { target }
+      }
     })
   // https://bugs.chromium.org/p/chromium/issues/detail?id=428044
   function relayoutHack () {
@@ -92,5 +104,11 @@ import ext from '../utils/ext'
     setTimeout(() => {
       this.style.display = 'block'
     }, 100)
+  }
+  function encodeHtmlEntities (untrustedInput) {
+    var encoded = untrustedInput.replace(/[\u00A0-\u9999<>&]/gim, function (i) {
+      return '&#' + i.charCodeAt(0) + ';'
+    })
+    return encoded
   }
 })
