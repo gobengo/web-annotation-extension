@@ -1,7 +1,7 @@
 {
-  "name": "extension-boilerplate",
-  "version": "0.0.2",
-  "description": "A template for creating cross-browser extensions",
+  "name": "web-annotation-extension",
+  "version": "0.0.0",
+  "description": "A browser extension for web annotation",
   "scripts": {
     "chrome-build": "cross-env TARGET=chrome gulp",
     "opera-build": "cross-env TARGET=opera gulp",
