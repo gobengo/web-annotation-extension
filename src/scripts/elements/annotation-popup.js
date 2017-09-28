@@ -1,5 +1,6 @@
 import { createEventListener } from '../utils/event-listener'
 import ext from '../utils/ext'
+import storage from '../utils/storage'
 
 /* eslint-env browser */
 (function (customElementsReady) {
@@ -15,7 +16,9 @@ import ext from '../utils/ext'
           // selection of webpage that the user is annotating
           selection: null,
           // the annotation body that the user has typed in
-          bodyText: null
+          bodyText: null,
+          // options managed by options page
+          options: null
         }
       }
       constructor () {
@@ -54,13 +57,16 @@ import ext from '../utils/ext'
           }
         })
         this._formListener.listenTo(this)
+        storage.get(['showJsonToggle'], (options) => {
+          this.setState({ options })
+        })
       }
       render () {
         const { selection } = this.state
+        const options = this.state.options || {}
         const selector = selection && selection.target && selection.target.selector
         const rangeDocumentFragmentSelector = selector && selector.find(s => s.type === 'https://bengo.is/ns/annotations/RangeDocumentFragmentSelector')
         const selectionHtml = rangeDocumentFragmentSelector && rangeDocumentFragmentSelector.contents
-        console.log('rangeDocumentFragmentSelector', rangeDocumentFragmentSelector)
         const webAnnotation = this._createWebAnnotation(this.state)
         // @TODO (bengo) DEFINITELY need to sanitize this before any real users use it
         const annoTargetHtml = selectionHtml
@@ -78,12 +84,16 @@ import ext from '../utils/ext'
             <textarea name="annotation-body" class="annotation-body">${this.state.bodyText || ''}</textarea>
             <input type="submit" value="Save"></input>
           </form>
-          <div class="annotation-preview">
-            <details>
-              <summary>JSON</summary>
-              <pre>${encodeHtmlEntities(JSON.stringify(webAnnotation, null, 2))}</pre>
-            </details>
-          </div>
+          ${options.showJsonToggle
+    ? `
+              <div class="annotation-preview">
+                <details>
+                  <summary>JSON</summary>
+                  <pre>${encodeHtmlEntities(JSON.stringify(webAnnotation, null, 2))}</pre>
+                </details>
+              </div>`
+    : ''
+}
         `
         return html
       }
@@ -131,10 +141,19 @@ import ext from '../utils/ext'
     })
   // https://bugs.chromium.org/p/chromium/issues/detail?id=428044
   function relayoutHack () {
-    this.style.opacity = 0
-    setTimeout(() => {
-      this.style.opacity = 1
-    }, 50)
+    // Apply for Mac OS only
+    ext.runtime.getPlatformInfo(info => {
+      if (info.os === 'mac') {
+        setTimeout(() => {
+          const width = document.body.clientWidth
+          // Increasing body size enforces the popup redrawing
+          document.body.style.width = `${width + 1}px`
+          setTimeout(() => {
+            document.body.style.width = ''
+          }, 1)
+        }, 250) // 250ms is enough to finish popup open animation
+      }
+    })
   }
   function encodeHtmlEntities (untrustedInput) {
     var encoded = untrustedInput.replace(/[\u00A0-\u9999<>&]/gim, function (i) {

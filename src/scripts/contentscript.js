@@ -40,6 +40,7 @@ const selectorFromRange = {
   /**
    * This idea could be improved:
    * * When selecting innerText of a <pre>, it would be ideal for 'contents' to still be wrapped in a <pre>
+   * * When selecting part of an <a href />, selection should still be wrapped in the link
    * Probably it's best not to have this 'presentation' optimization in the selector itself.
    * But perhaps selectors could have a property to a 'presentable' version
    */
