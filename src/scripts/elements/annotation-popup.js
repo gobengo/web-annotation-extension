@@ -1,4 +1,4 @@
-// import { createEventListener } from '../utils/event-listener'
+import { createEventListener } from '../utils/event-listener'
 import ext from '../utils/ext'
 
 /* eslint-env browser */
@@ -12,12 +12,28 @@ import ext from '../utils/ext'
     class AnnotationPopupElement extends HTMLElement {
       get initialState () {
         return {
-          selection: null
+          // selection of webpage that the user is annotating
+          selection: null,
+          // the annotation body that the user has typed in
+          bodyText: null
         }
       }
       constructor () {
         super()
         this._connected = false
+        this._formListener = createEventListener({
+          change: (event) => {
+            console.log('change event', event)
+            if (!event.target.name === 'annotation-body') return
+            this.setState({
+              bodyText: event.target.value
+            })
+          },
+          submit: (event) => {
+            console.log('submit event!', event)
+            event.preventDefault()
+          }
+        })
         this.setState(this.initialState)
       }
       connectedCallback () {
@@ -37,6 +53,7 @@ import ext from '../utils/ext'
               console.warn('popup received unexpected message', request.action, request)
           }
         })
+        this._formListener.listenTo(this)
       }
       render () {
         const { selection } = this.state
@@ -52,12 +69,13 @@ import ext from '../utils/ext'
             ? `<blockquote>${selection.text}</blockquote>`
             : `<p>You have not selected any text to annotate...</p>`
         const html = `
-          <h1>Annotate</h1>
-          <label>Selection:</label>
+          <!--
+            <h1>Annotate</h1>
+            <label>Selection:</label>
+          -->
           <div class="annotation-target">${annoTargetHtml}</div>
-          <label>Annotation:</label>
           <form class="annotation-form">
-            <textarea class="annotation-body"></textarea>
+            <textarea name="annotation-body" class="annotation-body">${this.state.bodyText || ''}</textarea>
             <input type="submit" value="Save"></input>
           </form>
           <div class="annotation-preview">
@@ -78,6 +96,7 @@ import ext from '../utils/ext'
         this._render()
       }
       disconnectedCallback () {
+        this._formListener.stopListening(this)
         this._connected = false
       }
       _render () {
@@ -95,15 +114,27 @@ import ext from '../utils/ext'
       _createWebAnnotation (state) {
         console.debug('_createWebAnnotation', state)
         const target = state.selection && state.selection.target
-        return { target }
+        const annotation = {
+          '@context': 'http://www.w3.org/ns/anno.jsonld',
+          type: 'Annotation',
+          target
+        }
+        if (state.bodyText) {
+          annotation.body = {
+            type: 'TextualBody',
+            value: state.bodyText,
+            format: 'text/plain'
+          }
+        }
+        return annotation
       }
     })
   // https://bugs.chromium.org/p/chromium/issues/detail?id=428044
   function relayoutHack () {
-    this.style.display = 'none'
+    this.style.opacity = 0
     setTimeout(() => {
-      this.style.display = 'block'
-    }, 100)
+      this.style.opacity = 1
+    }, 50)
   }
   function encodeHtmlEntities (untrustedInput) {
     var encoded = untrustedInput.replace(/[\u00A0-\u9999<>&]/gim, function (i) {
