@@ -18,7 +18,15 @@ import storage from '../utils/storage'
           // the annotation body that the user has typed in
           bodyText: null,
           // options managed by options page
-          options: null
+          options: null,
+          // status of saving
+          save: {
+            error: null,
+            inProgress: false,
+            // last response
+            response: null,
+            responseText: null
+          }
         }
       }
       constructor () {
@@ -33,8 +41,59 @@ import storage from '../utils/storage'
             })
           },
           submit: (event) => {
-            console.log('submit event!', event)
             event.preventDefault()
+            console.log('submit event!', event, this.state.options)
+            this.setState({
+              save: {
+                inProgress: true
+              }
+            })
+            const options = this.state.options
+            const saveUrl = options && options.saveUrl
+            if (!saveUrl) {
+              console.error('No saveUrl to save with :(')
+              this.setState({
+                save: {
+                  error: new Error('No Save URL Configured. Set one in extension options')
+                }
+              })
+              return
+            }
+            const annotation = this._createWebAnnotation(this.state)
+            // using xhr and not fetch because fetch response
+            // will not let me read location header
+            const xhr = new XMLHttpRequest()
+            xhr.addEventListener('load', () => {
+              this.setState({
+                bodyText: null,
+                save: {
+                  error: null,
+                  inProgress: false,
+                  responseText: xhr.responseText,
+                  response: {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    headers: new Map(Object.entries({
+                      location: xhr.getResponseHeader('location')
+                    }))
+                  }
+                }
+              })
+            })
+            xhr.addEventListener('error', error => {
+              console.error('Error saving annotation')
+              this.setState({
+                save: {
+                  inProgress: false,
+                  response: null,
+                  responseText: null,
+                  error: error
+                }
+              })
+            })
+            xhr.open('POST', saveUrl)
+            xhr.setRequestHeader('Content-Type', 'application/ld+json; profile="http://www.w3.org/ns/anno.jsonld"')
+            xhr.send(JSON.stringify(annotation, null, 2))
           }
         })
         this.setState(this.initialState)
@@ -57,12 +116,15 @@ import storage from '../utils/storage'
           }
         })
         this._formListener.listenTo(this)
-        storage.get(['showJsonToggle'], (options) => {
+        storage.get([
+          'showJsonToggle',
+          'saveUrl'
+        ], (options) => {
           this.setState({ options })
         })
       }
       render () {
-        const { selection } = this.state
+        const { selection, save } = this.state
         const options = this.state.options || {}
         const selector = selection && selection.target && selection.target.selector
         const rangeDocumentFragmentSelector = selector && selector.find(s => s.type === 'https://bengo.is/ns/annotations/RangeDocumentFragmentSelector')
@@ -82,7 +144,11 @@ import storage from '../utils/storage'
           <div class="annotation-target">${annoTargetHtml}</div>
           <form class="annotation-form">
             <textarea name="annotation-body" class="annotation-body">${this.state.bodyText || ''}</textarea>
-            <input type="submit" value="Save"></input>
+            ${save.inProgress
+    ? `<input type="submit" value="Saving&hellip;" disabled></input>`
+    : `<input type="submit" value="Save"></input>`
+}
+            ${this._renderSaveResponse(save)}
           </form>
           ${options.showJsonToggle
     ? `
@@ -120,6 +186,37 @@ import storage from '../utils/storage'
           this.dispatchEvent(new Event('annotation-popup-rendered'))
           relayoutHack.call(this)
         }
+      }
+      _renderSaveResponse (save = {}) {
+        const response = save.response
+        if (!response) {
+          if (save.error) {
+            return `${save.error}`
+          }
+          return ''
+        }
+        console.log('_renderSaveResponse', save)
+        if (response.status >= 200 && response.status <= 299) {
+          let location = response.headers.get('location')
+          if (!location) {
+            try { location = JSON.parse(save.responseText).url } catch (error) {}
+          }
+          if (location) return `Saved as <a href="${location}" target="_blank">${location}</a>`
+          return 'Saved'
+        }
+        // Error :(
+        let errorMessage
+        switch (response.headers.get('content-type')) {
+          case 'text/plain':
+            errorMessage = save.responseText
+            break
+          case 'application/json':
+            errorMessage = JSON.parse(save.responseText).message || save.responseText
+            break
+          default:
+            errorMessage = `${response.statusText} (${response.status})`
+        }
+        return `Error: ${errorMessage}`
       }
       _createWebAnnotation (state) {
         console.debug('_createWebAnnotation', state)

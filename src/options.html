@@ -5,11 +5,19 @@
 
 <body>
   <form>
-    <input type="checkbox" name="showJsonToggle" />
-    <label>
-      <strong>Show JSON Toggle</strong>
-      <p>The Annotation Popup will show an option to show the full Web Annotation JSON object representing your annotation</p>
-    </label>
+    <p>
+      <input type="checkbox" name="showJsonToggle" />
+      <label>
+        <strong>Show JSON Toggle</strong> - The Annotation Popup will show an option to show the full Web Annotation JSON object representing your annotation
+      </label>
+    </p>
+
+    <p>
+      <label>
+        <strong>Save URL</strong> - Annotations will be saved here via HTTP
+      </label>
+      <input type="text" name="saveUrl" />
+    </p>
   </form>
   <script src="scripts/options.js"></script>
 </body>
