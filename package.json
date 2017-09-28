@@ -58,6 +58,11 @@
     "vinyl-source-stream": "^1.1.0"
   },
   "dependencies": {
-    "dom-anchor-text-quote": "^4.0.2"
+    "@webcomponents/webcomponentsjs": "^1.0.13",
+    "babel-plugin-transform-custom-element-classes": "^0.1.0",
+    "dom-anchor-fragment": "^1.0.4",
+    "dom-anchor-text-position": "^4.0.0",
+    "dom-anchor-text-quote": "^4.0.2",
+    "simple-xpath-position": "^2.0.2"
   }
 }

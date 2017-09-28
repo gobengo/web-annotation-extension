@@ -63,9 +63,14 @@ gulp.task('ext', ['manifest', 'js'], () => {
 // -----------------
 // COMMON
 // -----------------
-gulp.task('js', () => {
+gulp.task('js', ['cp-polyfills'], () => {
   return buildJS(target)
 })
+
+gulp.task('cp-polyfills', [], function() {
+  gulp.src("lib/polyfills/**/*")
+      .pipe(gulp.dest(`build/${target}/polyfills/`));
+});
 
 gulp.task('styles', () => {
   return gulp.src('src/styles/**/*.scss')
@@ -131,7 +136,9 @@ function buildJS(target) {
     'contentscript.js',
     'options.js',
     'popup.js',
-    'livereload.js'
+    'livereload.js',
+    'utils/event-listener.js',
+    'elements/annotation-popup.js',
   ]
 
   let tasks = files.map( file => {
@@ -139,7 +146,7 @@ function buildJS(target) {
       entries: 'src/scripts/' + file,
       debug: true
     })
-    .transform('babelify', { presets: ['es2015'] })
+    .transform('babelify')
     .transform(preprocessify, {
       includeExtensions: ['.js'],
       context: context
@@ -149,12 +156,12 @@ function buildJS(target) {
     .pipe(buffer())
     .pipe(gulpif(!production, $.sourcemaps.init({ loadMaps: true }) ))
     .pipe(gulpif(!production, $.sourcemaps.write('./') ))
-    .pipe(gulpif(production, $.uglify({ 
-      "mangle": false,
-      "output": {
-        "ascii_only": true
-      } 
-    })))
+    // .pipe(gulpif(production, $.uglify({
+    //   "mangle": false,
+    //   "output": {
+    //     "ascii_only": true
+    //   }
+    // })))
     .pipe(gulp.dest(`build/${target}/scripts`));
   });
 

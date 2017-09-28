@@ -10,23 +10,20 @@
     .annotation-body {
       width: 100%;
     }
+    .annotation-target > blockquote {
+      margin-left: 0;
+      padding-left: 0.5em;
+      border-left: 0.5em solid #eee;
+    }
     </style>
   </head>
   <body>
     <div id="annotation-popup">
-      <h1>Annotate</h1>
-      <label>Selection:</label>
-      <div class="annotation-target">
-        <p>You have not selected any text to annotate...</p>
-      </div>
-      <label>Annotation:</label>
-      <form class="annotation-form">
-        <textarea class="annotation-body"></textarea>
-        <input type="submit" value="Save"></input>
-      </form>
-      <div class="annotation-preview"></div>
+      <annotation-popup>Loading...</annotation-popup>
     </div>
 
+    <script src="polyfills/webcomponents-loader.js"></script>
+    <script src="scripts/elements/annotation-popup.js"></script>
     <script src="scripts/popup.js"></script>
   </body>
 </html>
